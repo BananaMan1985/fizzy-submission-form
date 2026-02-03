@@ -40,9 +40,23 @@ export default async function handler(req, res) {
       return res.status(response.status).json({ error: errorText });
     }
 
-    const data = await response.json();
-    return res.status(200).json(data);
-  } catch (error) {
+// Get response as text first to handle empty responses
+      const responseText = await response.text();
+      
+      // Handle potentially empty or non-JSON responses
+      let data = {};
+      if (responseText) {
+              try {
+                        data = JSON.parse(responseText);
+              } catch (e) {
+                        data = { message: responseText || 'Card created successfully' };
+              }
+      } else {
+              data = { message: 'Card created successfully' };
+      }
+
+        return res.status(200).json(data);
+      } catch (error) {
     return res.status(500).json({ error: error.message });
   }
 }
