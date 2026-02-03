@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Raw Content Submission Form</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh;padding:40px 20px}
+.container{max-width:680px;margin:0 auto;background:#fff;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.15);overflow:hidden}
+.header{background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%);color:#fff;padding:32px 40px;text-align:center}
+.header h1{font-size:28px;font-weight:600;margin-bottom:8px}
+.header p{opacity:.8;font-size:15px}
+.form-body{padding:40px}
+.form-group{margin-bottom:28px}
+label{display:block;font-weight:600;color:#1a1a2e;margin-bottom:8px;font-size:14px}
+.required{color:#e74c3c}
+input[type=text],input[type=email],textarea{width:100%;padding:14px 16px;border:2px solid #e1e5eb;border-radius:10px;font-size:15px;font-family:inherit}
+input:focus,textarea:focus{outline:none;border-color:#667eea;box-shadow:0 0 0 3px rgba(102,126,234,.15)}
+textarea{min-height:200px;resize:vertical}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media(max-width:600px){.row{grid-template-columns:1fr}}
+.image-upload{border:2px dashed #d1d5db;border-radius:12px;padding:40px 20px;text-align:center;cursor:pointer;background:#fafbfc}
+.image-upload:hover{border-color:#667eea;background:#f5f7ff}
+.image-upload input{display:none}
+.preview-container{display:flex;flex-wrap:wrap;gap:12px;margin-top:16px}
+.preview-item{position:relative;width:100px;height:100px;border-radius:8px;overflow:hidden}
+.preview-item img{width:100%;height:100%;object-fit:cover}
+.preview-item .remove-btn{position:absolute;top:4px;right:4px;width:24px;height:24px;background:rgba(0,0,0,.6);border:none;border-radius:50%;color:#fff;cursor:pointer}
+.submit-btn{width:100%;padding:16px 32px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#fff;border:none;border-radius:10px;font-size:16px;font-weight:600;cursor:pointer}
+.submit-btn:disabled{opacity:.6;cursor:not-allowed}
+.status-message{margin-top:20px;padding:16px;border-radius:10px;text-align:center;display:none}
+.status-message.success{display:block;background:#d4edda;color:#155724}
+.status-message.error{display:block;background:#f8d7da;color:#721c24}
+.status-message.loading{display:block;background:#fff3cd;color:#856404}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="header"><h1>📝 Raw Content Submission</h1><p>Submit your ideas and content directly to our board</p></div>
+<form id="submissionForm" class="form-body">
+<div class="row">
+<div class="form-group"><label>Your Name <span class="required">*</span></label><input type="text" id="name" required placeholder="John Doe"></div>
+<div class="form-group"><label>Email <span class="required">*</span></label><input type="email" id="email" required placeholder="john@example.com"></div>
+</div>
+<div class="form-group"><label>Title <span class="required">*</span></label><input type="text" id="title" required placeholder="Give your submission a title"></div>
+<div class="form-group"><label>Content <span class="required">*</span></label><textarea id="content" required placeholder="Share your content..."></textarea></div>
+<div class="form-group"><label>Images (Optional)</label><div class="image-upload" id="imageUpload"><p><strong>Click to upload</strong> or drag and drop</p><input type="file" id="imageInput" accept="image/*" multiple></div><div class="preview-container" id="previewContainer"></div></div>
+<button type="submit" class="submit-btn" id="submitBtn">Submit Content</button>
+<div class="status-message" id="statusMessage"></div>
+</form>
+</div>
+<script>
+const CONFIG={API_TOKEN:'hWmv5tu1CnbphirRp5ZmVtyM',ACCOUNT_SLUG:'6101486',BOARD_ID:'03fh5nvlsyoce2arc9yqa7ka3',DEFAULT_STATUS:'Fresh Ideas',API_BASE:'https://app.fizzy.do'};
+let selectedFiles=[];
+const imageUpload=document.getElementById('imageUpload'),imageInput=document.getElementById('imageInput'),previewContainer=document.getElementById('previewContainer');
+imageUpload.onclick=()=>imageInput.click();
+imageUpload.ondragover=e=>{e.preventDefault();imageUpload.style.borderColor='#667eea'};
+imageUpload.ondragleave=()=>imageUpload.style.borderColor='#d1d5db';
+imageUpload.ondrop=e=>{e.preventDefault();imageUpload.style.borderColor='#d1d5db';handleFiles(e.dataTransfer.files)};
+imageInput.onchange=e=>handleFiles(e.target.files);
+function handleFiles(files){for(const f of files)if(f.type.startsWith('image/')&&f.size<=10485760){selectedFiles.push(f);addPreview(f)}}
+function addPreview(f){const r=new FileReader();r.onload=e=>{const d=document.createElement('div');d.className='preview-item';d.innerHTML='<img src="'+e.target.result+'"><button class="remove-btn" onclick="removeImage(this,\''+f.name+'\')">x</button>';previewContainer.appendChild(d)};r.readAsDataURL(f)}
+function removeImage(btn,name){selectedFiles=selectedFiles.filter(f=>f.name!==name);btn.parentElement.remove()}
+function showStatus(msg,type){const el=document.getElementById('statusMessage');el.textContent=msg;el.className='status-message '+type}
+function escapeHtml(t){const d=document.createElement('div');d.textContent=t;return d.innerHTML}
+document.getElementById('submissionForm').onsubmit=async e=>{e.preventDefault();const btn=document.getElementById('submitBtn');btn.disabled=true;showStatus('Submitting...','loading');try{const name=document.getElementById('name').value.trim(),email=document.getElementById('email').value.trim(),title=document.getElementById('title').value.trim(),content=document.getElementById('content').value.trim();const desc='<p><strong>Submitted by:</strong> '+escapeHtml(name)+' ('+escapeHtml(email)+')</p><hr><div>'+escapeHtml(content).replace(/\n/g,'<br>')+'</div>';const r=await fetch(CONFIG.API_BASE+'/'+CONFIG.ACCOUNT_SLUG+'/boards/'+CONFIG.BOARD_ID+'/cards',{method:'POST',headers:{Authorization:'Bearer '+CONFIG.API_TOKEN,'Content-Type':'application/json'},body:JSON.stringify({title:title,description:desc,column:CONFIG.DEFAULT_STATUS})});if(!r.ok)throw new Error('Failed');showStatus('Submitted successfully!','success');document.getElementById('submissionForm').reset();selectedFiles=[];previewContainer.innerHTML=''}catch(err){showStatus('Error: '+err.message,'error')}finally{btn.disabled=false}};
+</script>
+</body>
+</html>
