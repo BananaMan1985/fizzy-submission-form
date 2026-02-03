@@ -51,7 +51,7 @@ textarea{min-height:200px;resize:vertical}
 </form>
 </div>
 <script>
-const CONFIG={API_TOKEN:'hWmv5tu1CnbphirRp5ZmVtyM',ACCOUNT_SLUG:'6101486',BOARD_ID:'03fh5nvlsyoce2arc9yqa7ka3',DEFAULT_STATUS:'Fresh Ideas',API_BASE:'https://app.fizzy.do'};
+const DEFAULT_STATUS='Fresh Ideas';
 let selectedFiles=[];
 const imageUpload=document.getElementById('imageUpload'),imageInput=document.getElementById('imageInput'),previewContainer=document.getElementById('previewContainer');
 imageUpload.onclick=()=>imageInput.click();
@@ -64,7 +64,36 @@ function addPreview(f){const r=new FileReader();r.onload=e=>{const d=document.cr
 function removeImage(btn,name){selectedFiles=selectedFiles.filter(f=>f.name!==name);btn.parentElement.remove()}
 function showStatus(msg,type){const el=document.getElementById('statusMessage');el.textContent=msg;el.className='status-message '+type}
 function escapeHtml(t){const d=document.createElement('div');d.textContent=t;return d.innerHTML}
-document.getElementById('submissionForm').onsubmit=async e=>{e.preventDefault();const btn=document.getElementById('submitBtn');btn.disabled=true;showStatus('Submitting...','loading');try{const name=document.getElementById('name').value.trim(),email=document.getElementById('email').value.trim(),title=document.getElementById('title').value.trim(),content=document.getElementById('content').value.trim();const desc='<p><strong>Submitted by:</strong> '+escapeHtml(name)+' ('+escapeHtml(email)+')</p><hr><div>'+escapeHtml(content).replace(/\n/g,'<br>')+'</div>';const r=await fetch(CONFIG.API_BASE+'/'+CONFIG.ACCOUNT_SLUG+'/boards/'+CONFIG.BOARD_ID+'/cards',{method:'POST',headers:{Authorization:'Bearer '+CONFIG.API_TOKEN,'Content-Type':'application/json'},body:JSON.stringify({title:title,description:desc,column:CONFIG.DEFAULT_STATUS})});if(!r.ok)throw new Error('Failed');showStatus('Submitted successfully!','success');document.getElementById('submissionForm').reset();selectedFiles=[];previewContainer.innerHTML=''}catch(err){showStatus('Error: '+err.message,'error')}finally{btn.disabled=false}};
+document.getElementById('submissionForm').onsubmit=async e=>{
+  e.preventDefault();
+  const btn=document.getElementById('submitBtn');
+  btn.disabled=true;
+  showStatus('Submitting...','loading');
+  try{
+    const name=document.getElementById('name').value.trim();
+    const email=document.getElementById('email').value.trim();
+    const title=document.getElementById('title').value.trim();
+    const content=document.getElementById('content').value.trim();
+    const desc='<p><strong>Submitted by:</strong> '+escapeHtml(name)+' ('+escapeHtml(email)+')</p><hr><div>'+escapeHtml(content).replace(/\n/g,'<br>')+'</div>';
+    const r=await fetch('/api/submit',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({title:title,description:desc,column:DEFAULT_STATUS})
+    });
+    if(!r.ok){
+      const errData=await r.json();
+      throw new Error(errData.error||'Failed');
+    }
+    showStatus('✓ Submitted successfully!','success');
+    document.getElementById('submissionForm').reset();
+    selectedFiles=[];
+    previewContainer.innerHTML='';
+  }catch(err){
+    showStatus('Error: '+err.message,'error');
+  }finally{
+    btn.disabled=false;
+  }
+};
 </script>
 </body>
 </html>
