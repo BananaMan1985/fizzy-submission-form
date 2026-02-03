@@ -31,7 +31,7 @@ export default async function handler(req, res) {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
         },
-        body: JSON.stringify({ card: { title, description } }
+        body: JSON.stringify({ card: { title, description } })
       }
     );
 
